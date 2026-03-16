@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="居家健身">
+<title>居家健身</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Bebas+Neue&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0e0e;--surface:#161616;--card:#1c1c1c;--border:#2a2a2a;
+  --accent:#d4ff4e;--accent2:#ff6b35;--accent3:#4ecdc4;
+  --text:#f0f0f0;--muted:#666;--warm:#ffb347;--green:#97C459;--green-dark:#3B6D11;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'Noto Sans TC',sans-serif;font-weight:300;color:var(--text);padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
+
+.app{display:flex;flex-direction:column;height:100%;max-width:480px;margin:0 auto}
+
+/* HEADER */
+.hdr{flex-shrink:0;padding:14px 16px 10px;border-bottom:1px solid var(--border);background:var(--bg)}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.hdr-title{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:1px;line-height:1}
+.timer-btn{font-size:12px;padding:7px 14px;border:1px solid var(--border);border-radius:20px;background:var(--card);cursor:pointer;color:var(--text);font-family:'Noto Sans TC',sans-serif}
+
+/* WEEK STRIP */
+.week-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.wday{text-align:center;padding:6px 2px;border-radius:8px;border:1px solid transparent}
+.wday.today{border-color:var(--green-dark);background:rgba(151,196,89,0.12)}
+.wday-lbl{font-size:9px;color:var(--muted);letter-spacing:0.5px;margin-bottom:2px;font-family:'DM Mono',monospace}
+.wday-date{font-size:12px;font-weight:500}
+.wday.today .wday-date{color:var(--green)}
+.wday-dot{width:5px;height:5px;border-radius:50%;background:var(--green);margin:3px auto 0}
+
+/* TABS */
+.tabs{flex-shrink:0;display:flex;gap:6px;padding:10px 16px;overflow-x:auto;border-bottom:1px solid var(--border);background:var(--bg)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex-shrink:0;padding:7px 14px;border-radius:20px;border:1px solid var(--border);background:var(--card);font-size:13px;cursor:pointer;color:var(--muted);transition:all 0.15s;font-family:'Noto Sans TC',sans-serif}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#0e0e0e;font-weight:700}
+
+/* SCROLL AREA */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.scroll::-webkit-scrollbar{display:none}
+
+/* WORKOUT HEADER */
+.wk-hdr{padding:14px 16px 12px;background:var(--surface);border-bottom:1px solid var(--border)}
+.wk-title-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.wk-name{font-family:'Bebas Neue',sans-serif;font-size:30px;letter-spacing:1px;line-height:1}
+.wk-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.wk-dur{text-align:right}
+.wk-dur-num{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1}
+.wk-dur-lbl{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace}
+.prog-wrap{height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:5px}
+.prog-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-family:'DM Mono',monospace}
+
+/* SECTION */
+.sec-hdr{padding:9px 16px;background:var(--bg);border-bottom:1px solid var(--border)}
+.sec-badge{display:inline-block;font-size:10px;padding:3px 10px;border-radius:20px;font-weight:500;letter-spacing:0.5px}
+.badge-warmup{background:rgba(255,179,71,0.15);color:var(--warm)}
+.badge-main{background:rgba(212,255,78,0.12);color:var(--accent)}
+.badge-hiit{background:rgba(255,107,53,0.15);color:var(--accent2)}
+.badge-cooldown{background:rgba(78,205,196,0.15);color:var(--accent3)}
+.sec-time{font-size:10px;color:var(--muted);margin-left:8px;font-family:'DM Mono',monospace}
+.sec-note{font-size:11px;color:var(--muted);margin-top:4px;font-style:italic}
+
+/* EXERCISE ROW */
+.ex-row{display:flex;align-items:flex-start;gap:12px;padding:13px 16px;border-bottom:1px solid var(--border);cursor:pointer;background:var(--surface);transition:background 0.1s;-webkit-user-select:none}
+.ex-row:active{background:var(--card)}
+.ex-row.checked{background:#111}
+.ex-chk{width:22px;height:22px;border-radius:5px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all 0.15s;background:transparent}
+.ex-chk.done{background:var(--accent);border-color:var(--accent)}
+.chk-mark{font-size:13px;color:#0e0e0e;display:none;font-weight:900}
+.ex-chk.done .chk-mark{display:block}
+.ex-info{flex:1;min-width:0}
+.ex-name{font-size:14px;font-weight:400;transition:all 0.15s;color:var(--text)}
+.ex-row.checked .ex-name{color:var(--muted);text-decoration:line-through}
+.ex-note{font-size:11px;color:var(--muted);margin-top:2px;font-style:italic}
+.ex-sets{font-size:12px;color:var(--accent);flex-shrink:0;text-align:right;font-family:'DM Mono',monospace;white-space:nowrap}
+.ex-row.checked .ex-sets{color:var(--muted)}
+
+/* BOTTOM */
+.bottom{flex-shrink:0;display:flex;gap:8px;padding:10px 16px;padding-bottom:calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--border)}
+.btn-reset{flex:1;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer;font-size:13px;color:var(--muted);font-family:'Noto Sans TC',sans-serif}
+.btn-done{flex:2;padding:13px;border:1px solid var(--border);border-radius:12px;background:var(--card);cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all 0.2s;font-family:'Noto Sans TC',sans-serif}
+.btn-done.ready{background:var(--accent);border-color:var(--accent);color:#0e0e0e}
+
+/* TIMER OVERLAY */
+.timer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;gap:20px}
+.timer-box{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:28px 32px;text-align:center;min-width:260px}
+.timer-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:3px;text-transform:uppercase;margin-bottom:16px}
+.timer-ring{margin:0 auto 16px;width:110px;height:110px;position:relative}
+.timer-svg{transform:rotate(-90deg);position:absolute;top:0;left:0}
+.timer-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:48px;color:var(--text);letter-spacing:2px}
+.timer-num.go{color:var(--accent)}
+.presets{display:flex;gap:8px;justify-content:center;margin-bottom:16px}
+.preset{padding:7px 16px;border:1px solid var(--border);border-radius:20px;background:var(--surface);cursor:pointer;font-size:13px;font-family:'DM Mono',monospace;color:var(--muted);transition:all 0.15s;-webkit-user-select:none}
+.preset.active{background:var(--accent);border-color:var(--accent);color:#0e0e0e;font-weight:700}
+.timer-btns{display:flex;gap:8px;justify-content:center}
+.t-btn{padding:10px 22px;border:1px solid var(--border);border-radius:12px;background:var(--surface);cursor:pointer;font-size:14px;color:var(--text);font-family:'Noto Sans TC',sans-serif}
+.t-close{padding:10px 22px;border:1px solid transparent;border-radius:12px;background:transparent;cursor:pointer;font-size:14px;color:var(--muted);font-family:'Noto Sans TC',sans-serif}
+
+/* SUCCESS TOAST */
+.toast{position:fixed;top:calc(env(safe-area-inset-top) + 16px);left:50%;transform:translateX(-50%) translateY(-80px);background:var(--accent);color:#0e0e0e;padding:10px 24px;border-radius:20px;font-size:14px;font-weight:700;z-index:300;transition:transform 0.3s;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="hdr">
+    <div class="hdr-top">
+      <div class="hdr-title">居家健身 💪</div>
+      <button class="timer-btn" onclick="openTimer()">⏱ 休息計時</button>
+    </div>
+    <div class="week-row" id="weekRow"></div>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="scroll" id="scroll"></div>
+  <div class="bottom">
+    <button class="btn-reset" onclick="resetDay()">重置</button>
+    <button class="btn-done" id="btnDone" onclick="markDone()">完成訓練</button>
+  </div>
+</div>
+
+<!-- Timer -->
+<div class="timer-overlay" id="timerOverlay">
+  <div class="timer-box">
+    <div class="timer-label">休息計時器</div>
+    <div class="timer-ring">
+      <svg class="timer-svg" width="110" height="110">
+        <circle cx="55" cy="55" r="46" fill="none" stroke="#2a2a2a" stroke-width="7"/>
+        <circle id="arc" cx="55" cy="55" r="46" fill="none" stroke="#d4ff4e" stroke-width="7"
+          stroke-linecap="round" stroke-dasharray="289.0" stroke-dashoffset="0"/>
+      </svg>
+      <div class="timer-num" id="timerNum">60</div>
+    </div>
+    <div class="presets">
+      <button class="preset" onclick="setPreset(30)">30s</button>
+      <button class="preset active" onclick="setPreset(60)">60s</button>
+      <button class="preset" onclick="setPreset(90)">90s</button>
+    </div>
+    <div class="timer-btns">
+      <button class="t-btn" id="tCtrl" onclick="toggleTimer()">暫停</button>
+      <button class="t-close" onclick="closeTimer()">關閉</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">🎉 今日訓練完成！</div>
+
+<script>
+const WD = {
+  1:{title:"上肢推力",sub:"胸 · 肩 · 三頭",e:"💪",m:50,sections:[
+    {t:"warmup",l:"熱身",time:"8 min",exs:[
+      {n:"手臂大繞環",s:"×15 圈",note:"向前向後各15圈，活動肩關節"},
+      {n:"牆壁胸椎旋轉",s:"×10 每側",note:"側身靠牆，上身向外旋轉"},
+      {n:"貓牛式",s:"×12 次",note:"四足跪姿，吸氣塌背吐氣拱背"},
+      {n:"跪姿伏地挺身（熱身）",s:"×10 次",note:"膝蓋著地輕鬆喚醒胸肌"},
+    ]},
+    {t:"main",l:"主訓練",time:"",exs:[
+      {n:"標準伏地挺身",s:"4 × 12",note:"手寬於肩，全程收核心"},
+      {n:"窄距伏地挺身",s:"3 × 10",note:"雙手置胸口下方，主攻三頭"},
+      {n:"Pike Push-Up",s:"3 × 10",note:"臀部抬高呈倒V，主攻肩部"},
+      {n:"椅子撐體 Dips 🪑",s:"3 × 12",note:"雙手撐椅緣，身體下沉手肘90°"},
+      {n:"牆壁伏地挺身（燃燒）🧱",s:"2 × 力竭",note:"靠牆站立版，最後一組用"},
+      {n:"超人式",s:"3 × 15",note:"俯臥抬起雙臂雙腿，停頓2秒"},
+    ]},
+    {t:"cooldown",l:"收操伸展",time:"8 min",exs:[
+      {n:"胸肌牆角伸展 🧱",s:"30秒 × 2",note:"手臂抵牆，身體向前轉"},
+      {n:"三頭肌過頭伸展",s:"30秒 × 每側",note:"一手舉起彎肘，另一手輕壓"},
+      {n:"肩膀前側伸展",s:"30秒 × 2",note:"雙手後交扣，挺胸抬頭"},
+      {n:"嬰兒式",s:"45秒",note:"跪趴地板，雙手前伸放鬆肩背"},
+      {n:"深呼吸收操",s:"× 5次",note:"吸氣4秒、憋2秒、吐氣6秒"},
+    ]}
+  ]},
+  2:{title:"下肢＋臀部",sub:"股四頭 · 腿後 · 臀部",e:"🦵",m:55,sections:[
+    {t:"warmup",l:"熱身",time:"8 min",exs:[
+      {n:"髖關節繞環",s:"×10 每腳",note:"站立，單腳抬膝向外大幅繞圈"},
+      {n:"腿後側動態伸展",s:"×12 每腳",note:"腳尖勾起向前踢，感受腿後側"},
+      {n:"淺蹲開合跳",s:"30秒",note:"半蹲位置做開合跳"},
+      {n:"原地弓步走",s:"×10 每腳",note:"輕鬆節奏，拉開髖屈肌"},
+    ]},
+    {t:"main",l:"主訓練",time:"",exs:[
+      {n:"深蹲",s:"4 × 15",note:"蹲至大腿平行地面，起身夾臀"},
+      {n:"保加利亞分腿蹲 🛏️",s:"3 × 10 每腳",note:"後腳架床上，前腳單腿深蹲"},
+      {n:"臀橋",s:"4 × 20",note:"抬起臀部至身體成直線，頂端夾臀2秒"},
+      {n:"單腳臀橋",s:"3 × 10 每腳",note:"一腳抬起，強化臀中肌"},
+      {n:"側步蹲",s:"3 × 12 每腳",note:"大步側踏，重心在彎曲腿"},
+      {n:"椅子提踵 🪑",s:"3 × 25",note:"扶椅背，踮腳尖上下"},
+    ]},
+    {t:"cooldown",l:"收操伸展",time:"10 min",exs:[
+      {n:"靠牆股四頭伸展 🧱",s:"40秒 × 每腳",note:"單腳後勾，扶牆平衡"},
+      {n:"低弓步髖屈肌伸展",s:"40秒 × 每側",note:"弓步跪地，重心前移"},
+      {n:"坐姿腿後側伸展",s:"40秒 × 2",note:"雙腿伸直，上身前折，背部平直"},
+      {n:"臀部鴿式伸展",s:"40秒 × 每側",note:"仰躺，一腳翹膝上，雙手抱腿後側"},
+      {n:"仰躺脊椎扭轉",s:"30秒 × 每側",note:"膝蓋側倒，雙臂張開放鬆下背"},
+    ]}
+  ]},
+  4:{title:"拉力＋核心",sub:"背部 · 二頭 · 核心",e:"🏋️",m:55,sections:[
+    {t:"warmup",l:"熱身",time:"8 min",exs:[
+      {n:"貓牛式",s:"×15 次",note:"活動胸椎與腰椎"},
+      {n:"肩胛骨後縮練習",s:"×15 次",note:"雙臂展開，肩胛骨向中間夾"},
+      {n:"死蟲式（核心啟動）",s:"×8 每側",note:"仰躺，對角線慢慢伸直，腰部不離地"},
+    ]},
+    {t:"main",l:"主訓練",time:"",exs:[
+      {n:"床架仰臥划船 🛏️",s:"4 × 10",note:"躺床架下方，抓橫桿往上拉，練背神器"},
+      {n:"超人式（進階）",s:"3 × 12 每側",note:"對角手腳同時抬起，頂端停3秒"},
+      {n:"平板支撐",s:"4 × 45秒",note:"身體一直線，全程正常呼吸"},
+      {n:"側平板支撐",s:"3 × 30秒 每側",note:"強化腰側肌與斜腹肌"},
+      {n:"捲腹",s:"3 × 20",note:"只卷起上背，腰部不離地"},
+      {n:"鳥狗式",s:"3 × 12 每側",note:"對角手腳伸直，腰椎不旋轉"},
+      {n:"登山者式",s:"3 × 20 每腳",note:"平板姿勢，雙腳交替向胸口收"},
+    ]},
+    {t:"cooldown",l:"收操伸展",time:"8 min",exs:[
+      {n:"背闊肌伸展 🪑",s:"30秒 × 每側",note:"單手扶椅背，上身側彎"},
+      {n:"跨胸肩膀伸展",s:"30秒 × 每側",note:"一手拉過胸前，另一手輕壓"},
+      {n:"嬰兒式（廣角）",s:"45秒",note:"雙膝打開，雙手往前爬"},
+      {n:"仰躺膝蓋抱胸",s:"30秒",note:"雙膝抱向胸口，輕搖左右"},
+      {n:"仰躺脊椎扭轉",s:"30秒 × 每側",note:"膝蓋側倒，深呼吸放鬆"},
+    ]}
+  ]},
+  5:{title:"全身 HIIT",sub:"心肺 · 燃脂 · 全身",e:"🔥",m:45,sections:[
+    {t:"warmup",l:"熱身",time:"6 min",exs:[
+      {n:"慢跑原地",s:"60秒",note:""},
+      {n:"開合跳",s:"45秒",note:""},
+      {n:"動態弓步＋手臂擺動",s:"×10 每腳",note:""},
+      {n:"手臂繞環＋腰部旋轉",s:"30秒",note:""},
+    ]},
+    {t:"hiit",l:"HIIT 主訓練",time:"3 輪",note:"每動作 40秒做 / 20秒休息，一輪後休息90秒",exs:[
+      {n:"跳躍深蹲",s:"40s / 20s",note:""},
+      {n:"伏地挺身",s:"40s / 20s",note:""},
+      {n:"弓步跳",s:"40s / 20s",note:""},
+      {n:"登山者式",s:"40s / 20s",note:""},
+      {n:"波比跳",s:"40s / 20s",note:""},
+      {n:"高抬腿",s:"40s / 20s",note:""},
+    ]},
+    {t:"cooldown",l:"收操伸展",time:"10 min",exs:[
+      {n:"慢步走降心率",s:"2分鐘",note:"讓心跳逐漸降低"},
+      {n:"站姿體前彎",s:"45秒",note:"雙腿伸直，上身慢慢向下"},
+      {n:"低弓步髖屈肌伸展",s:"40秒 × 每側",note:"一腳跪地，重心前移"},
+      {n:"靠牆股四頭伸展 🧱",s:"35秒 × 每腳",note:"單腳後勾扶牆平衡"},
+      {n:"胸肌牆角伸展 🧱",s:"35秒 × 2",note:"雙手扶牆角，身體微向前壓"},
+      {n:"仰躺全身伸展",s:"45秒",note:"雙手舉過頭頂，全身盡力拉長"},
+    ]}
+  ]}
+};
+const SCHED={0:null,1:1,2:2,3:null,4:4,5:5,6:null};
+const BCLS={warmup:"badge-warmup",main:"badge-main",hiit:"badge-hiit",cooldown:"badge-cooldown"};
+
+let activeDay=SCHED[new Date().getDay()]||1;
+let checks={};
+let completed={};
+try{completed=JSON.parse(localStorage.getItem("wk_done")||"{}");}catch{}
+try{checks=JSON.parse(localStorage.getItem("wk_checks")||"{}");}catch{}
+
+function saveChecks(){try{localStorage.setItem("wk_checks",JSON.stringify(checks));}catch{}}
+
+function getWeekDates(){
+  const now=new Date(),dow=now.getDay();
+  return Array.from({length:7},(_,i)=>{const d=new Date(now);d.setDate(now.getDate()-dow+i);return d;});
+}
+
+function renderWeek(){
+  const dates=getWeekDates();
+  const today=new Date().getDay();
+  document.getElementById("weekRow").innerHTML=dates.map((d,i)=>{
+    const dk=d.toISOString().split("T")[0];
+    const done=completed[dk];
+    return`<div class="wday${i===today?" today":""}">
+      <div class="wday-lbl">${["日","一","二","三","四","五","六"][i]}</div>
+      <div class="wday-date">${d.getDate()}</div>
+      ${done?'<div class="wday-dot"></div>':""}
+    </div>`;
+  }).join("");
+}
+
+function renderTabs(){
+  document.getElementById("tabs").innerHTML=Object.entries(WD).map(([k,w])=>
+    `<button class="tab${activeDay==k?" active":""}" onclick="switchDay(${k})">${w.e} ${w.title}</button>`
+  ).join("");
+}
+
+function getAllKeys(){
+  const w=WD[activeDay],keys=[];
+  w.sections.forEach((s,si)=>s.exs.forEach((_,ei)=>keys.push(`${activeDay}-${si}-${ei}`)));
+  return keys;
+}
+
+function renderScroll(){
+  const w=WD[activeDay];
+  const all=getAllKeys(),done=all.filter(k=>checks[k]).length,total=all.length;
+  const pct=total>0?Math.round(done/total*100):0;
+  let html=`<div class="wk-hdr">
+    <div class="wk-title-row">
+      <div><div class="wk-name">${w.e} ${w.title}</div><div class="wk-sub">${w.sub}</div></div>
+      <div class="wk-dur"><div class="wk-dur-num">${w.m}</div><div class="wk-dur-lbl">分鐘</div></div>
+    </div>
+    <div class="prog-wrap"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="prog-lbl"><span>進度</span><span>${done} / ${total}</span></div>
+  </div>`;
+  w.sections.forEach((sec,si)=>{
+    html+=`<div class="sec-hdr">
+      <span class="sec-badge ${BCLS[sec.t]}">${sec.l}</span>
+      ${sec.time?`<span class="sec-time">${sec.time}</span>`:""}
+      ${sec.note?`<div class="sec-note">${sec.note}</div>`:""}
+    </div>`;
+    sec.exs.forEach((ex,ei)=>{
+      const key=`${activeDay}-${si}-${ei}`,ck=checks[key];
+      html+=`<div class="ex-row${ck?" checked":""}" onclick="toggle('${key}')">
+        <div class="ex-chk${ck?" done":""}"><span class="chk-mark">✓</span></div>
+        <div class="ex-info"><div class="ex-name">${ex.n}</div>${ex.note?`<div class="ex-note">${ex.note}</div>`:""}</div>
+        <div class="ex-sets">${ex.s}</div>
+      </div>`;
+    });
+  });
+  document.getElementById("scroll").innerHTML=html;
+  updateBtn();
+}
+
+function updateBtn(){
+  const all=getAllKeys(),done=all.filter(k=>checks[k]).length,total=all.length;
+  const ready=done===total&&total>0;
+  const btn=document.getElementById("btnDone");
+  btn.textContent=ready?"✓ 完成今日訓練！":`完成訓練 (${done}/${total})`;
+  btn.className="btn-done"+(ready?" ready":"");
+}
+
+function toggle(key){
+  checks[key]=!checks[key];
+  saveChecks();
+  renderScroll();
+}
+
+function resetDay(){
+  getAllKeys().forEach(k=>delete checks[k]);
+  saveChecks();
+  renderScroll();
+}
+
+function markDone(){
+  const all=getAllKeys(),done=all.filter(k=>checks[k]).length;
+  if(done<all.length)return;
+  const dk=new Date().toISOString().split("T")[0];
+  completed[dk]=activeDay;
+  try{localStorage.setItem("wk_done",JSON.stringify(completed));}catch{}
+  renderWeek();
+  showToast();
+}
+
+function showToast(){
+  const t=document.getElementById("toast");
+  t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"),2500);
+}
+
+function switchDay(d){
+  activeDay=d;
+  renderTabs();
+  renderScroll();
+  document.getElementById("scroll").scrollTop=0;
+}
+
+/* TIMER */
+let tSec=60,tPreset=60,tRunning=true,tInterval=null;
+const CIRC=2*Math.PI*46;
+
+function openTimer(){
+  document.getElementById("timerOverlay").style.display="flex";
+  tSec=tPreset;tRunning=true;
+  clearInterval(tInterval);
+  tInterval=setInterval(tick,1000);
+  renderTimerUI();
+}
+function closeTimer(){
+  document.getElementById("timerOverlay").style.display="none";
+  clearInterval(tInterval);
+}
+function setPreset(s){
+  tPreset=s;tSec=s;tRunning=true;
+  clearInterval(tInterval);
+  tInterval=setInterval(tick,1000);
+  document.querySelectorAll(".preset").forEach(b=>b.classList.toggle("active",parseInt(b.textContent)===s));
+  renderTimerUI();
+}
+function toggleTimer(){
+  tRunning=!tRunning;
+  if(tRunning){clearInterval(tInterval);tInterval=setInterval(tick,1000);}
+  else clearInterval(tInterval);
+  document.getElementById("tCtrl").textContent=tRunning?"暫停":"繼續";
+}
+function tick(){
+  if(tSec>0){tSec--;renderTimerUI();}
+  else{clearInterval(tInterval);tRunning=false;document.getElementById("tCtrl").textContent="繼續";}
+}
+function renderTimerUI(){
+  const pct=tSec/tPreset;
+  document.getElementById("arc").style.strokeDashoffset=CIRC*(1-pct);
+  const el=document.getElementById("timerNum");
+  el.textContent=tSec===0?"GO!":tSec;
+  el.className="timer-num"+(tSec===0?" go":"");
+}
+
+renderWeek();renderTabs();renderScroll();
+</script>
+</body>
+</html>
